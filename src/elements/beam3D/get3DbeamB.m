@@ -1,4 +1,4 @@
-function [B, L] = get3DbeamB(coord)
+function [B, L] = get3DbeamB(coord, prop)
 % Compute "B" matrix for 3D beam element
 
 % Compute rotation matrix
@@ -6,16 +6,23 @@ xtilde = (coord(2,:) - coord(1,:))';
 L = norm(xtilde);
 xtilde = xtilde/L;
 
-ytilde = cross([1;0;0],xtilde);
-ytilde = ytilde/norm(ytilde);
+if (1-abs(xtilde'*[0;0;1])>1e-8) 
+    % member not vertical - orientation angle is from global Z axis
+    ytilde = cross([0;0;1],xtilde);
+    ytilde = ytilde/norm(ytilde);
 
-ztilde = cross(xtilde, ytilde);
+    ztilde = cross(xtilde, ytilde);
 
-R1 = [xtilde ytilde ztilde];
+    R1 = [xtilde ytilde ztilde];
+    R2 = rodrigues(xtilde, prop.angle);
+    R = R2*R1;
+else 
+    % member vertical - orientation angle is from global X axis
+    s = sin(prop.angle);
+    c = cos(prop.angle);
+    R = [0 s -c; 0 c s; 1 0 0];
+end
 
-R2 = rodrigues(xtilde, prop.angle);
-
-R = R2*R1;
 R = blkdiag(R,R,R,R);
 
 % Compute corot transformation
