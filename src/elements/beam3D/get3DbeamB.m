@@ -1,10 +1,29 @@
 function [B, L] = get3DbeamB(coord, prop)
 % Compute "B" matrix for 3D beam element
+%
+% Optional field prop.offsets = [r1 r2]: rigid end zones of length r1 at end 1
+% and r2 at end 2, measured along the member axis from the joints. B then
+% maps joint (workpoint) DOF to deformations of the flexible part, and L is
+% the flexible length L - r1 - r2.
 
 % Compute rotation matrix
 xtilde = (coord(2,:) - coord(1,:))';
 L = norm(xtilde);
 xtilde = xtilde/L;
+
+% Rigid end offsets: flexible end displacement = u - hat(e)*theta, with
+% e = r1*xtilde at end 1 and e = -r2*xtilde at end 2
+if isfield(prop, 'offsets')
+    r1 = prop.offsets(1);
+    r2 = prop.offsets(2);
+else
+    r1 = 0;
+    r2 = 0;
+end
+H = eye(12);
+H(1:3,4:6) = -hat(r1*xtilde);
+H(7:9,10:12) = -hat(-r2*xtilde);
+L = L - r1 - r2;
 
 if (1-abs(xtilde'*[0;0;1])>1e-8) 
     % member not vertical - orientation angle is from global Z axis
@@ -43,4 +62,4 @@ T(11,5) = 1;
 T(6,2) = 1;
 T(12,3) = 1;
 
-B = T'*R';
+B = T'*R'*H;
