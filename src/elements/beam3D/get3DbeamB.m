@@ -18,9 +18,12 @@ if (1-abs(xtilde'*[0;0;1])>1e-8)
     R = R2*R1;
 else 
     % member vertical - orientation angle is from global X axis
+    % local x = [0;0;sz] (sz = -1 for a member pointing down), local y =
+    % [s;c;0], local z = cross(x,y)
     s = sin(prop.angle);
     c = cos(prop.angle);
-    R = [0 s -c; 0 c s; 1 0 0];
+    sz = sign(xtilde(3));
+    R = [0 s -sz*c; 0 c sz*s; sz 0 0];
 end
 
 R = blkdiag(R,R,R,R);
